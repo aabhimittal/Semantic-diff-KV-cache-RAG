@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "semantic-kv"
+version = "0.1.0"
+description = "Semantic-diff KV cache for RAG: prefix caching keyed on semantic similarity of retrieved chunks, with span-level invalidation and RoPE re-rotation."
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+authors = [{ name = "Abhi Mittal" }]
+dependencies = [
+    "numpy>=1.24",
+    "torch>=2.1",
+    "transformers>=4.44",
+]
+
+[project.optional-dependencies]
+qdrant = ["qdrant-client>=1.9"]
+embeddings = ["sentence-transformers>=2.6"]
+demo = ["gradio>=4.36"]
+dev = ["pytest>=8"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
