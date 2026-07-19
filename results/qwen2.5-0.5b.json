@@ -1,0 +1,149 @@
+{
+  "model": "Qwen/Qwen2.5-0.5B-Instruct",
+  "rows": [
+    {
+      "overlap": 1.0,
+      "recompute_ratio": 0.0,
+      "kl": 0.92297,
+      "top1": 0.5882,
+      "compute": 0.2182,
+      "saving": 0.7818,
+      "prefill_ms": 292.6,
+      "prompt_tokens": 110,
+      "hits": 6,
+      "misses": 0
+    },
+    {
+      "overlap": 1.0,
+      "recompute_ratio": 0.15,
+      "kl": 0.32739,
+      "top1": 0.8235,
+      "compute": 0.3636,
+      "saving": 0.6364,
+      "prefill_ms": 687.4,
+      "prompt_tokens": 110,
+      "hits": 6,
+      "misses": 0
+    },
+    {
+      "overlap": 1.0,
+      "recompute_ratio": 0.3,
+      "kl": 0.22668,
+      "top1": 0.8824,
+      "compute": 0.4727,
+      "saving": 0.5273,
+      "prefill_ms": 1027.7,
+      "prompt_tokens": 110,
+      "hits": 6,
+      "misses": 0
+    },
+    {
+      "overlap": 1.0,
+      "recompute_ratio": 1.0,
+      "kl": 0.0,
+      "top1": 1.0,
+      "compute": 1.0,
+      "saving": 0.0,
+      "prefill_ms": 1164.6,
+      "prompt_tokens": 110,
+      "hits": 6,
+      "misses": 0
+    },
+    {
+      "overlap": 0.8,
+      "recompute_ratio": 0.0,
+      "kl": 0.94042,
+      "top1": 0.4706,
+      "compute": 0.3571,
+      "saving": 0.6429,
+      "prefill_ms": 569.8,
+      "prompt_tokens": 112,
+      "hits": 5,
+      "misses": 1
+    },
+    {
+      "overlap": 0.8,
+      "recompute_ratio": 0.15,
+      "kl": 0.33796,
+      "top1": 0.8824,
+      "compute": 0.4732,
+      "saving": 0.5268,
+      "prefill_ms": 1147.5,
+      "prompt_tokens": 112,
+      "hits": 5,
+      "misses": 1
+    },
+    {
+      "overlap": 0.8,
+      "recompute_ratio": 0.3,
+      "kl": 0.24353,
+      "top1": 0.8824,
+      "compute": 0.5625,
+      "saving": 0.4375,
+      "prefill_ms": 1385.1,
+      "prompt_tokens": 112,
+      "hits": 5,
+      "misses": 1
+    },
+    {
+      "overlap": 0.8,
+      "recompute_ratio": 1.0,
+      "kl": 0.0,
+      "top1": 1.0,
+      "compute": 1.0,
+      "saving": 0.0,
+      "prefill_ms": 1337.0,
+      "prompt_tokens": 112,
+      "hits": 5,
+      "misses": 1
+    },
+    {
+      "overlap": 0.5,
+      "recompute_ratio": 0.0,
+      "kl": 0.81625,
+      "top1": 0.6471,
+      "compute": 0.5612,
+      "saving": 0.4388,
+      "prefill_ms": 842.1,
+      "prompt_tokens": 98,
+      "hits": 3,
+      "misses": 2
+    },
+    {
+      "overlap": 0.5,
+      "recompute_ratio": 0.15,
+      "kl": 0.29849,
+      "top1": 1.0,
+      "compute": 0.6429,
+      "saving": 0.3571,
+      "prefill_ms": 1063.8,
+      "prompt_tokens": 98,
+      "hits": 3,
+      "misses": 2
+    },
+    {
+      "overlap": 0.5,
+      "recompute_ratio": 0.3,
+      "kl": 0.24096,
+      "top1": 0.9412,
+      "compute": 0.7041,
+      "saving": 0.2959,
+      "prefill_ms": 1146.6,
+      "prompt_tokens": 98,
+      "hits": 3,
+      "misses": 2
+    },
+    {
+      "overlap": 0.5,
+      "recompute_ratio": 1.0,
+      "kl": 0.0,
+      "top1": 1.0,
+      "compute": 1.0,
+      "saving": 0.0,
+      "prefill_ms": 1430.3,
+      "prompt_tokens": 98,
+      "hits": 3,
+      "misses": 2
+    }
+  ]
+}

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>semantic-kv — Semantic-diff KV cache for RAG</title>
+<style>
+  :root {
+    --bg: #fdfcf9; --fg: #1c1d21; --muted: #6a6d76; --accent: #4f46e5;
+    --card: #ffffff; --border: #e5e3dc; --code-bg: #f3f2ee; --good: #0a7d4d; --bad: #b3382d;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #16171b; --fg: #e8e8ea; --muted: #9a9da6; --accent: #8b85f4;
+      --card: #1e2027; --border: #2c2e37; --code-bg: #24262e; --good: #4ade9d; --bad: #f08c81;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg);
+    font: 17px/1.65 Georgia, 'Times New Roman', serif;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 3rem 1.25rem 5rem; }
+  h1, h2, h3 { font-family: 'Helvetica Neue', Arial, sans-serif; line-height: 1.2; }
+  h1 { font-size: 2.3rem; margin: 0 0 .3rem; }
+  .sub { color: var(--muted); font-size: 1.1rem; margin-bottom: 2.2rem; }
+  h2 { font-size: 1.4rem; margin-top: 2.6rem; border-bottom: 1px solid var(--border); padding-bottom: .35rem; }
+  a { color: var(--accent); }
+  code, pre {
+    font: .85em/1.5 'SF Mono', Menlo, Consolas, monospace;
+    background: var(--code-bg); border-radius: 5px;
+  }
+  code { padding: .1em .35em; }
+  pre { padding: 1rem 1.2rem; overflow-x: auto; }
+  pre code { background: none; padding: 0; }
+  .tablebox { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-family: 'Helvetica Neue', Arial, sans-serif; font-size: .85rem; }
+  th, td { padding: .45rem .7rem; text-align: right; border-bottom: 1px solid var(--border); }
+  th:first-child, td:first-child { text-align: left; }
+  th { color: var(--muted); font-weight: 600; }
+  .good { color: var(--good); font-weight: 600; }
+  .bad { color: var(--bad); }
+  .callout {
+    background: var(--card); border: 1px solid var(--border); border-left: 4px solid var(--accent);
+    border-radius: 6px; padding: 1rem 1.25rem; margin: 1.6rem 0;
+  }
+  .links { display: flex; gap: 1rem; flex-wrap: wrap; margin: 1.4rem 0 0; font-family: 'Helvetica Neue', Arial, sans-serif; }
+  .links a {
+    text-decoration: none; border: 1px solid var(--border); border-radius: 999px;
+    padding: .4rem 1.1rem; font-size: .9rem;
+  }
+  figure { margin: 1.6rem 0; }
+  figcaption { color: var(--muted); font-size: .85rem; margin-top: .4rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>semantic-kv</h1>
+  <p class="sub">A KV cache for RAG keyed on <em>semantic similarity</em> of retrieved chunks — reuse the shared span, compute only the delta.</p>
+  <div class="links">
+    <a href="https://github.com/aabhimittal/semantic-diff-kv-cache-rag">GitHub</a>
+    <a href="https://github.com/aabhimittal/semantic-diff-kv-cache-rag/blob/main/benchmarks/divergence.py">Benchmark</a>
+    <a href="https://github.com/aabhimittal/semantic-diff-kv-cache-rag/tree/main/space">HF Space demo</a>
+  </div>
+
+  <h2>The problem</h2>
+  <p>Every turn of a RAG conversation re-encodes near-identical context. Retrieval returns 80%-overlapping chunks, and the model pays full prefill for all of them, again. Exact-match prefix caches (vLLM, SGLang radix trees) go cold the moment one chunk is reordered or lightly edited — and retrieval reorders and lightly edits constantly.</p>
+
+  <pre><code>turn 1:  [chunk A][chunk B][chunk C][query₁]   full prefill, segments cached
+turn 2:  [chunk A][chunk B'][chunk D][query₂]  A reused · B' served from B (cos 0.94)
+                                               only D + query computed</code></pre>
+
+  <h2>The caveat that is the whole project</h2>
+  <p>The KV of a shared span is <strong>not</strong> reusable for free when the preceding tokens differ:</p>
+  <ol>
+    <li><strong>Position.</strong> RoPE rotates keys by absolute position — but rotations compose, so a cached key moves from position <code>p</code> to <code>q</code> exactly, with one extra rotation <code>R(q−p)</code>. Solved, not approximate.</li>
+    <li><strong>Cross-attention.</strong> A cached chunk was encoded standalone; its hidden states never attended to the chunks now in front of it. This is a real approximation that never fully goes away.</li>
+  </ol>
+  <div class="callout">
+    The project therefore ships with a <strong>divergence harness</strong> that measures exactly when the approximation holds, and a repair knob: <code>recompute_ratio</code> re-runs the leading fraction of each reused chunk against its true prefix. At <code>1.0</code> the pipeline is numerically identical to a vanilla forward pass — asserted by the test suite — so the approximation lives entirely in one tunable knob.
+  </div>
+
+  <h2>Measured fidelity/compute trade — Qwen2.5-0.5B-Instruct</h2>
+  <p>KL divergence of next-token distributions (cached vs exact prefill) over a fixed continuation; top-1 argmax agreement; fraction of prompt prefill skipped.</p>
+  <div class="tablebox">
+  <table>
+    <tr><th>context overlap</th><th>blend ratio</th><th>KL</th><th>top-1 agree</th><th>prefill saved</th></tr>
+    <tr><td>100%</td><td>0.00</td><td class="bad">0.923</td><td class="bad">58.8%</td><td class="good">78.2%</td></tr>
+    <tr><td>100%</td><td>0.15</td><td>0.327</td><td>82.3%</td><td class="good">63.6%</td></tr>
+    <tr><td>100%</td><td>0.30</td><td>0.227</td><td>88.2%</td><td>52.7%</td></tr>
+    <tr><td>100%</td><td>1.00</td><td class="good">0.000</td><td class="good">100%</td><td>0%</td></tr>
+    <tr><td>80%</td><td>0.00</td><td class="bad">0.940</td><td class="bad">47.1%</td><td class="good">64.3%</td></tr>
+    <tr><td>80%</td><td>0.15</td><td>0.338</td><td>88.2%</td><td class="good">52.7%</td></tr>
+    <tr><td>80%</td><td>0.30</td><td>0.244</td><td>88.2%</td><td>43.8%</td></tr>
+    <tr><td>50%</td><td>0.15</td><td>0.299</td><td class="good">100%</td><td>35.7%</td></tr>
+    <tr><td>50%</td><td>0.30</td><td>0.241</td><td>94.1%</td><td>29.6%</td></tr>
+  </table>
+  </div>
+  <figure><figcaption>Pure reuse is measurably lossy — half the argmaxes flip. A 15% blend budget drops KL ~3× while still skipping half to two-thirds of prefill. Wall-clock at 100% overlap, ratio 0: 293&nbsp;ms cached vs 1165&nbsp;ms exact (~4×, CPU fp32).</figcaption></figure>
+
+  <h2>Architecture</h2>
+  <p>A vector store fronts the KV cache — and it indexes <em>cache fragments</em>, not documents. One point per cached chunk segment; nearest-fragment search implements the semantic key; payload filters (<code>doc_id</code>) implement span-level invalidation. In-memory store by default, Qdrant adapter included.</p>
+  <pre><code>lookup(chunk):  exact (text hash) → semantic (cos ≥ τ) → miss
+assemble():     reuse  → RoPE re-rotation to new position
+                blend  → leading r·L tokens recomputed vs true prefix
+                miss   → fresh compute + standalone encode for next time
+invalidate(doc_id=…) / invalidate(chunk_id=…)   # span-level</code></pre>
+
+  <h2>Try it</h2>
+  <pre><code>pip install -e ".[dev]" && pytest          # offline: tiny random Llama
+python benchmarks/divergence.py \
+    --model Qwen/Qwen2.5-0.5B-Instruct     # reproduce the table above</code></pre>
+
+  <p style="color: var(--muted); margin-top: 3rem; font-size: .85rem;">
+    MIT licensed. Related work: CacheBlend (Yao et&nbsp;al. 2024), PromptCache (Gim et&nbsp;al. 2023), SGLang RadixAttention, StreamingLLM.
+  </p>
+</div>
+</body>
+</html>

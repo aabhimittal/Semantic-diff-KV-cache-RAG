@@ -1,0 +1,5 @@
+torch>=2.1
+transformers>=4.44
+numpy>=1.24
+gradio>=4.36
+git+https://github.com/aabhimittal/semantic-diff-kv-cache-rag.git
